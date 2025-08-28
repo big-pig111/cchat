@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialogue</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background: #ffffff;
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            position: fixed;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 10;
+        }
+        
+        .sidebar.right {
+            right: 0;
+            border-right: none;
+            border-left: 1px solid #e2e8f0;
+        }
+        
+        .photo-wall {
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .photo-wall-inner {
+            display: flex;
+            flex-direction: column;
+            animation: photoFlow 30s linear infinite;
+        }
+        
+        .photo-item {
+            width: 100%;
+            height: 180px;
+            margin: 0;
+            border-radius: 0;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .photo-item:hover {
+            transform: scale(1.02);
+            z-index: 5;
+        }
+        
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .photo-item:hover img {
+            transform: scale(1.1);
+        }
+        
+        @keyframes photoFlow {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-1800px); /* 10张图片 * 180px高度 */
+            }
+        }
+        
+        .photo-wall:hover .photo-wall-inner {
+            animation-play-state: paused;
+        }
+        
+        .social-link {
+            position: fixed;
+            top: 20px;
+            right: 320px;
+            z-index: 200;
+            background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
+            border-radius: 50px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 20px rgba(29, 161, 242, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .social-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(29, 161, 242, 0.4);
+            background: linear-gradient(135deg, #0d8bd9 0%, #0a6bb8 100%);
+        }
+        
+        .twitter-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        
+        .dialogue-container {
+            flex: 1;
+            width: calc(100% - 560px);
+            margin-left: 280px;
+            margin-right: 280px;
+            padding: 60px 40px 120px;
+            position: relative;
+            z-index: 1;
+        }
+        .dialogue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            margin-bottom: 40px;
+            width: 100%;
+        }
+        
+        .dialogue-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .dialogue-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .dialogue-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .dialogue-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.1);
+            }
+        }
+        .dialogue-item {
+            max-width: 75%;
+            padding: 20px 24px;
+            border-radius: 20px;
+            line-height: 1.6;
+            font-size: 16px;
+            position: relative;
+            transition: all 0.3s ease;
+            animation: messageSlideIn 0.4s ease-out;
+        }
+        
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .user:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+        
+        .assistant {
+            align-self: flex-start;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #2d3748;
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .assistant:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 280px;
+            right: 280px;
+            background: #ffffff;
+            padding: 20px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            border-top: 1px solid #f0f0f0;
+            z-index: 100;
+        }
+        
+        .input-wrap {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        #dialogue-input {
+            flex: 1;
+            padding: 18px 24px;
+            border: 2px solid #e2e8f0;
+            border-radius: 30px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        #dialogue-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        #dialogue-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        #send-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        #send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+        
+        #send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Twitter/X 社交链接 -->
+    <a href="https://x.com/cchat_cro?s=21" target="_blank" class="social-link">
+        <svg class="twitter-icon" viewBox="0 0 24 24">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        Follow us on X
+    </a>
+    
+    <div class="main-layout">
+        <!-- 左侧边栏 -->
+        <div class="sidebar">
+            <div class="photo-wall" id="left-photo-wall">
+                <!-- 照片将通过JavaScript动态添加 -->
+            </div>
+        </div>
+        
+        <!-- 主要内容区域 -->
+        <div class="dialogue-container">
+            <div class="dialogue-list" id="dialogue-list">
+                <div class="dialogue-item assistant">
+                    Hello, I am your specialized Cronos (CRO) blockchain AI assistant. I am now connected to real AI services and can provide you with professional insights and strategies for Cronos blockchain development, DeFi optimization, and Web3 solutions.
+                    <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px;">
+                        <div id="connection-status" style="width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; animation: pulse 2s infinite;"></div>
+                        <span id="status-text" style="font-size: 14px; color: #6b7280;">Connecting...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧边栏 -->
+        <div class="sidebar right">
+            <div class="photo-wall" id="right-photo-wall">
+                <!-- 照片将通过JavaScript动态添加 -->
+            </div>
+        </div>
+    </div>
+    <div class="input-area">
+        <div class="input-wrap">
+            <input type="text" id="dialogue-input" placeholder="Enter your message...">
+            <button id="send-btn">→</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Functions配置
+        const FIREBASE_FUNCTIONS_BASE = 'https://us-central1-chat-294cc.cloudfunctions.net';
+        
+        const dialogueList = document.getElementById('dialogue-list');
+        const input = document.getElementById('dialogue-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        // 显示AI正在输入状态
+        function showTypingIndicator() {
+            const typingItem = document.createElement('div');
+            typingItem.className = 'dialogue-item assistant typing-indicator';
+            typingItem.innerHTML = '<div style="display: flex; gap: 4px;"><div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: typing 1.4s infinite;"></div><div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: typing 1.4s infinite; animation-delay: 0.2s;"></div><div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: typing 1.4s infinite; animation-delay: 0.4s;"></div></div>';
+            dialogueList.appendChild(typingItem);
+            dialogueList.scrollTop = dialogueList.scrollHeight;
+            return typingItem;
+        }
+
+        // 移除输入状态
+        function removeTypingIndicator(typingItem) {
+            if (typingItem) {
+                typingItem.remove();
+            }
+        }
+
+        // 调用AI API
+        async function callChatAPI(message) {
+            try {
+                const response = await fetch(`${FIREBASE_FUNCTIONS_BASE}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, conversationHistory: [] })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API调用失败:', error);
+                throw error;
+            }
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const content = input.value.trim();
+            if (!content) return;
+
+            // 禁用输入和按钮
+            input.disabled = true;
+            sendBtn.disabled = true;
+            sendBtn.textContent = '...';
+
+            // 添加用户消息
+            const userItem = document.createElement('div');
+            userItem.className = 'dialogue-item user';
+            userItem.textContent = content;
+            dialogueList.appendChild(userItem);
+
+            // 清空输入框
+            input.value = '';
+
+            // 滚动到底部
+            dialogueList.scrollTop = dialogueList.scrollHeight;
+
+            // 显示AI正在输入状态
+            const typingItem = showTypingIndicator();
+
+            try {
+                // 调用AI API
+                const result = await callChatAPI(content);
+                
+                // 移除输入状态
+                removeTypingIndicator(typingItem);
+                
+                // 添加AI回复
+                const assistantItem = document.createElement('div');
+                assistantItem.className = 'dialogue-item assistant';
+                assistantItem.textContent = result.response;
+                dialogueList.appendChild(assistantItem);
+                
+            } catch (error) {
+                // 移除输入状态
+                removeTypingIndicator(typingItem);
+                
+                // 显示错误消息
+                const errorItem = document.createElement('div');
+                errorItem.className = 'dialogue-item assistant';
+                errorItem.textContent = `抱歉，服务暂时不可用。错误信息：${error.message}`;
+                dialogueList.appendChild(errorItem);
+            } finally {
+                // 恢复输入和按钮
+                input.disabled = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = '→';
+                
+                // 滚动到底部
+                dialogueList.scrollTop = dialogueList.scrollHeight;
+                
+                // 重新聚焦输入框
+                input.focus();
+            }
+        }
+
+        // 按钮点击发送
+        sendBtn.addEventListener('click', sendMessage);
+
+        // 回车发送
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // 自动检测连接状态
+        async function checkConnectionStatus() {
+            const statusDot = document.getElementById('connection-status');
+            const statusText = document.getElementById('status-text');
+            
+            try {
+                const response = await fetch(`${FIREBASE_FUNCTIONS_BASE}/health`);
+                if (response.ok) {
+                    statusDot.style.background = '#10b981';
+                    statusText.textContent = 'Connected';
+                    statusDot.style.animation = 'none';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                statusDot.style.background = '#ef4444';
+                statusText.textContent = 'Connection Failed';
+                statusDot.style.animation = 'none';
+            }
+        }
+        
+        // 照片墙数据 - 使用本地图片
+        const photoData = [
+            'png/1.jpg',
+            'png/2.jpg',
+            'png/3.jpg',
+            'png/4.jpg',
+            'png/5.jpg',
+            'png/6.jpg',
+            'png/7.jpg',
+            'png/8.jpg',
+            'png/9.jpg',
+            'png/10.jpg'
+        ];
+
+        // 创建照片墙
+        function createPhotoWall(containerId, photos) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            // 创建内部容器
+            const innerContainer = document.createElement('div');
+            innerContainer.className = 'photo-wall-inner';
+            
+            // 添加第一组照片
+            photos.forEach((photoUrl, index) => {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'photo-item';
+                
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                img.alt = `照片 ${index + 1}`;
+                img.loading = 'lazy';
+                
+                photoItem.appendChild(img);
+                innerContainer.appendChild(photoItem);
+            });
+            
+            // 添加第二组照片（用于无缝循环）
+            photos.forEach((photoUrl, index) => {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'photo-item';
+                
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                img.alt = `照片 ${index + 1}`;
+                img.loading = 'lazy';
+                
+                photoItem.appendChild(img);
+                innerContainer.appendChild(photoItem);
+            });
+            
+            container.appendChild(innerContainer);
+        }
+
+        // 页面加载完成后自动检测连接状态和创建照片墙
+        window.addEventListener('load', () => {
+            setTimeout(checkConnectionStatus, 1000);
+            
+            // 创建左右两侧的照片墙
+            createPhotoWall('left-photo-wall', photoData);
+            createPhotoWall('right-photo-wall', photoData);
+            
+            // 确保输入框正常工作
+            if (input && sendBtn) {
+                // 按钮点击发送
+                sendBtn.addEventListener('click', sendMessage);
+                
+                // 回车发送
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+                
+                // 自动聚焦输入框
+                input.focus();
+            }
+        });
+
+        // 添加打字动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes typing {
+                0%, 20% { opacity: 0; }
+                50% { opacity: 1; }
+                100% { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
