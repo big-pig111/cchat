@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dialogue</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <style>
         * {
             margin: 0;
@@ -458,7 +459,16 @@
             const statusText = document.getElementById('status-text');
             
             try {
-                const response = await fetch(`${FIREBASE_FUNCTIONS_BASE}/health`);
+                // 添加超时处理
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+                
+                const response = await fetch(`${FIREBASE_FUNCTIONS_BASE}/health`, {
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
                 if (response.ok) {
                     statusDot.style.background = '#10b981';
                     statusText.textContent = 'Connected';
@@ -467,8 +477,15 @@
                     throw new Error(`HTTP ${response.status}`);
                 }
             } catch (error) {
+                console.log('Connection check failed:', error.message);
                 statusDot.style.background = '#ef4444';
-                statusText.textContent = 'Connection Failed';
+                if (error.name === 'AbortError') {
+                    statusText.textContent = 'Connection Timeout';
+                } else if (error.message.includes('ERR_CONNECTION_RESET')) {
+                    statusText.textContent = 'Network Error';
+                } else {
+                    statusText.textContent = 'Connection Failed';
+                }
                 statusDot.style.animation = 'none';
             }
         }
@@ -527,6 +544,16 @@
             container.appendChild(innerContainer);
         }
 
+        // 全局错误处理
+        window.addEventListener('error', (event) => {
+            console.log('Global error:', event.error);
+            // 忽略evmAsk.js相关的错误
+            if (event.filename && event.filename.includes('evmAsk.js')) {
+                event.preventDefault();
+                return false;
+            }
+        });
+        
         // 页面加载完成后自动检测连接状态和创建照片墙
         window.addEventListener('load', () => {
             setTimeout(checkConnectionStatus, 1000);
