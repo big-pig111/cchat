@@ -1,595 +1,1570 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+    <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialogue</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        body {
-            background: #ffffff;
-            color: #333;
-            min-height: 100vh;
-            position: relative;
-        }
-        
-        .main-layout {
-            display: flex;
-            min-height: 100vh;
-            position: relative;
-        }
-        
-        .sidebar {
-            width: 280px;
-            background: #f8fafc;
-            border-right: 1px solid #e2e8f0;
-            position: fixed;
-            height: 100vh;
-            overflow: hidden;
-            z-index: 10;
-        }
-        
-        .sidebar.right {
-            right: 0;
-            border-right: none;
-            border-left: 1px solid #e2e8f0;
-        }
-        
-        .photo-wall {
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .photo-wall-inner {
-            display: flex;
-            flex-direction: column;
-            animation: photoFlow 30s linear infinite;
-        }
-        
-        .photo-item {
-            width: 100%;
-            height: 180px;
-            margin: 0;
-            border-radius: 0;
-            overflow: hidden;
-            position: relative;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-        
-        .photo-item:hover {
-            transform: scale(1.02);
-            z-index: 5;
-        }
-        
-        .photo-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        
-        .photo-item:hover img {
-            transform: scale(1.1);
-        }
-        
-        @keyframes photoFlow {
-            0% {
-                transform: translateY(0);
-            }
-            100% {
-                transform: translateY(-1800px); /* 10张图片 * 180px高度 */
+    <title>BAO App - 10 Players Draw</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E40AF',
+                        secondary: '#059669',
+                        accent: '#D97706',
+                        dark: '#0F172A',
+                        light: '#F8FAFC',
+                        gold: '#F59E0B',
+                        silver: '#6B7280',
+                        bronze: '#CD7F32',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        error: '#EF4444',
+                        info: '#3B82F6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Poppins', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'scale-in': 'scaleIn 0.3s ease-out',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' },
+                            '100%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.6)' },
+                        }
+                    }
+                },
             }
         }
-        
-        .photo-wall:hover .photo-wall-inner {
-            animation-play-state: paused;
-        }
-        
-        .social-link {
-            position: fixed;
-            top: 20px;
-            right: 320px;
-            z-index: 200;
-            background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
-            border-radius: 50px;
-            padding: 12px 20px;
-            box-shadow: 0 4px 20px rgba(29, 161, 242, 0.3);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .social-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(29, 161, 242, 0.4);
-            background: linear-gradient(135deg, #0d8bd9 0%, #0a6bb8 100%);
-        }
-        
-        .twitter-icon {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-        
-        .dialogue-container {
-            flex: 1;
-            width: calc(100% - 560px);
-            margin-left: 280px;
-            margin-right: 280px;
-            padding: 60px 40px 120px;
-            position: relative;
-            z-index: 1;
-        }
-        .dialogue-list {
-            display: flex;
-            flex-direction: column;
-            gap: 28px;
-            margin-bottom: 40px;
-            width: 100%;
-        }
-        
-        .dialogue-list::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .dialogue-list::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-        
-        .dialogue-list::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
-        
-        .dialogue-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
             }
-            50% {
-                opacity: 0.5;
-                transform: scale(1.1);
+            .text-shadow-lg {
+                text-shadow: 5px 5px 0px rgba(0, 0, 0, 0.2);
             }
-        }
-        .dialogue-item {
-            max-width: 75%;
-            padding: 20px 24px;
-            border-radius: 20px;
-            line-height: 1.6;
-            font-size: 16px;
-            position: relative;
-            transition: all 0.3s ease;
-            animation: messageSlideIn 0.4s ease-out;
-        }
-        
-        @keyframes messageSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+            .rotate-random {
+                transform: rotate(var(--rotation, -3deg));
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            .border-meme {
+                border-width: 4px;
+                border-style: solid;
+                border-color: black;
             }
-        }
-        
-        .user {
-            align-self: flex-end;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            border-bottom-right-radius: 6px;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        }
-        
-        .user:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-        }
-        
-        .assistant {
-            align-self: flex-start;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            color: #2d3748;
-            border-bottom-left-radius: 6px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-        
-        .assistant:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
-        }
-        .input-area {
-            position: fixed;
-            bottom: 0;
-            left: 280px;
-            right: 280px;
-            background: #ffffff;
-            padding: 20px;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
-            border-top: 1px solid #f0f0f0;
-            z-index: 100;
-        }
-        
-        .input-wrap {
-            max-width: 800px;
-            margin: 0 auto;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
-        
-        #dialogue-input {
-            flex: 1;
-            padding: 18px 24px;
-            border: 2px solid #e2e8f0;
-            border-radius: 30px;
-            font-size: 16px;
-            outline: none;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-        }
-        
-        #dialogue-input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-            background: rgba(255, 255, 255, 0.95);
-        }
-        
-        #dialogue-input:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        #send-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            font-size: 18px;
-            font-weight: 600;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        }
-        
-        #send-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-        }
-        
-        #send-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+            .clip-path-slant {
+                clip-path: polygon(0 0, 100% 5%, 100% 100%, 0 95%);
+            }
+
         }
     </style>
 </head>
-<body>
-    <!-- Twitter/X 社交链接 -->
-    <a href="https://x.com/cchat_cro?s=21" target="_blank" class="social-link">
-        <svg class="twitter-icon" viewBox="0 0 24 24">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-        </svg>
-        Follow us on X
-    </a>
-    
-    <div class="main-layout">
-        <!-- 左侧边栏 -->
-        <div class="sidebar">
-            <div class="photo-wall" id="left-photo-wall">
-                <!-- 照片将通过JavaScript动态添加 -->
+<body class="bg-gray-50 font-sans overflow-x-hidden">
+    <!-- Nav -->
+    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl overflow-hidden">
+                    <img src="png/4.jpg" alt="BAO Logo" class="w-full h-full object-cover">
+                </div>
+                <h1 class="text-2xl font-display font-bold bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">
+                    BAO
+                </h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200">Home</a>
+                <button id="nav-how-it-works" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200 cursor-pointer">How It Works</button>
+                <a href="#leaderboard" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200">Leaderboard</a>
+                <button id="open-history" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200">History</button>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <!-- SOL price -->
+                <div class="bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+                    <span class="text-sm text-gray-600">SOL: </span>
+                    <span id="sol-price" class="text-sm font-semibold text-primary">$0.00</span>
+                </div>
+                <button id="wallet-connect" class="bg-primary hover:bg-primary/90 text-white font-medium py-2.5 px-5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md">
+                    <i class="fa fa-wallet mr-2"></i> Connect Wallet
+                </button>
+                <div id="wallet-info" class="hidden">
+                    <span id="wallet-address" class="text-sm text-gray-600 mr-3"></span>
+                    <button id="disconnect-wallet" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="fa fa-sign-out"></i>
+                    </button>
+                </div>
+                <div id="userInfo" class="hidden">
+                    <!-- User info will be displayed here -->
+                </div>
+                <div id="myTickets" class="hidden">
+                    <!-- My tickets will be displayed here -->
+                </div>
+                <button class="md:hidden text-gray-600 hover:text-primary">
+                    <i class="fa fa-bars"></i>
+                </button>
             </div>
         </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="relative bg-gradient-to-br from-dark via-slate-800 to-slate-700 pt-20 md:pt-28 pb-32 md:pb-40 overflow-hidden">
+        <!-- Subtle geometric patterns -->
+        <div class="absolute inset-0 opacity-5">
+            <div class="absolute top-20 left-20 w-32 h-32 border border-white/20 rotate-45"></div>
+            <div class="absolute top-40 right-32 w-24 h-24 border border-white/20 rounded-full"></div>
+            <div class="absolute bottom-32 left-1/4 w-20 h-20 bg-white/10 rotate-12"></div>
+            <div class="absolute bottom-40 right-1/3 w-16 h-16 border border-white/20 transform rotate-45"></div>
+        </div>
         
-        <!-- 主要内容区域 -->
-        <div class="dialogue-container">
-            <div class="dialogue-list" id="dialogue-list">
-                <div class="dialogue-item assistant">
-                    Hello, I am your specialized Cronos (CRO) blockchain AI assistant. I am now connected to real AI services and can provide you with professional insights and strategies for Cronos blockchain development, DeFi optimization, and Web3 solutions.
-                    <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px;">
-                        <div id="connection-status" style="width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; animation: pulse 2s infinite;"></div>
-                        <span id="status-text" style="font-size: 14px; color: #6b7280;">Connecting...</span>
-                    </div>
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 mb-8">
+                    <span class="text-white/80 text-sm font-medium">🎯 Premium BAO Platform</span>
+                </div>
+                
+                <h1 class="text-5xl md:text-7xl font-display font-bold mb-8 text-white leading-tight">
+                    <span class="bg-gradient-to-r from-gold via-yellow-400 to-gold bg-clip-text text-transparent">
+                        Elite Draw
+                    </span>
+                    <br>
+                    <span class="text-white">10 Players</span>
+                </h1>
+                
+                <p class="text-xl md:text-2xl text-gray-300 mb-10 leading-relaxed max-w-3xl mx-auto">
+                    Professional BAO system with automatic draws at 10 participants. 
+                    <span class="text-gold font-semibold">80% winner</span> + 10% buyback + 5% referrals + 4% grand prize + 1% developers
+                </p>
+                
+                <div class="flex flex-col sm:flex-row justify-center gap-6">
+                    <button id="buy-tickets-btn" class="group bg-gradient-to-r from-gold to-yellow-500 hover:from-yellow-500 hover:to-gold text-dark font-semibold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:-translate-y-1">
+                        <i class="fa fa-ticket mr-3 group-hover:scale-110 transition-transform"></i> 
+                        Buy Tickets
+                    </button>
+                    <button id="open-rules" class="group bg-white/10 hover:bg-white/20 text-white font-medium py-4 px-8 rounded-xl border border-white/20 backdrop-blur-sm transition-all duration-300 hover:border-white/40">
+                        <i class="fa fa-info-circle mr-3 group-hover:scale-110 transition-transform"></i> 
+                        How It Works
+                    </button>
                 </div>
             </div>
         </div>
         
-        <!-- 右侧边栏 -->
-        <div class="sidebar right">
-            <div class="photo-wall" id="right-photo-wall">
-                <!-- 照片将通过JavaScript动态添加 -->
+        <div class="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none z-20">
+            <div class="bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20 flex items-center space-x-3 animate-pulse">
+                <span class="text-white/80 font-medium">Scroll Down</span>
+                <i class="fa fa-chevron-down text-white/60"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Rules modal -->
+    <div id="rules-modal" class="fixed inset-0 bg-black/50 z-[100] hidden">
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl border-4 border-black shadow-2xl overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between px-4 py-3 border-b-4 border-black bg-memeYellow">
+                    <h3 class="text-xl font-extrabold">How It Works</h3>
+                    <button id="close-rules" class="bg-black text-white font-bold px-3 py-1 rounded-lg border-2 border-black">Close</button>
+                </div>
+                <iframe src="rules.html" class="w-full flex-1"></iframe>
             </div>
         </div>
     </div>
-    <div class="input-area">
-        <div class="input-wrap">
-            <input type="text" id="dialogue-input" placeholder="Enter your message...">
-            <button id="send-btn">→</button>
+
+    <!-- History modal -->
+    <div id="history-modal" class="fixed inset-0 bg-black/50 z-[100] hidden">
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-6xl h-[90vh] rounded-2xl border-4 border-black shadow-2xl overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b-4 border-black bg-memeYellow">
+                    <h3 class="text-xl font-extrabold">BAO History</h3>
+                    <button id="close-history" class="bg-black text-white font-bold px-4 py-2 rounded-lg border-2 border-black">Close</button>
+                </div>
+                <div class="flex-1">
+                    <iframe src="history.html" class="w-full h-full border-0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Draw result modal -->
+    <div id="draw-result-modal" class="fixed inset-0 bg-black/50 z-[100] hidden">
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl border-4 border-black shadow-2xl overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b-4 border-black bg-memeYellow">
+                    <h3 class="text-xl font-extrabold">🎉 Draw Result</h3>
+                    <button id="close-draw-result" class="bg-black text-white font-bold px-4 py-2 rounded-lg border-2 border-black">Close</button>
+                </div>
+                 <div id="draw-result-content" class="p-6 overflow-y-auto flex-1">
+                    <!-- Draw result content injected by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current round -->
+    <section class="pt-20 pb-16 bg-gradient-to-b from-white to-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+                    <i class="fa fa-chart-line mr-2"></i>
+                    Live Progress
+                </div>
+                <h2 class="text-4xl md:text-5xl font-display font-bold mb-4 text-dark">
+                    Current <span class="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">Rounds</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Two premium tiers running simultaneously with real-time progress tracking
+                </p>
+            </div>
+            
+            <div class="max-w-6xl mx-auto">
+                <!-- 2U Tier Progress -->
+                <div class="mb-12">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-silver to-gray-400 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-white text-xl font-bold">2</span>
+                        </div>
+                        <h3 class="text-2xl font-display font-bold text-gray-700">Silver Tier</h3>
+                    </div>
+                    
+                    <div class="relative mb-6">
+                        <div class="bg-gray-100 rounded-2xl h-16 overflow-hidden shadow-inner">
+                            <div id="progress-bar-2u" class="bg-gradient-to-r from-silver to-gray-400 h-full rounded-2xl transition-all duration-700 ease-out" style="width: 0%"></div>
+                        </div>
+                        <div id="progress-label-2u" class="absolute top-1/2 left-[50%] -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                            <div class="bg-white px-6 py-2 rounded-full shadow-lg border border-gray-200">
+                                <span class="text-gray-700 font-semibold">
+                                    <span id="participant-count-2u">0</span>/10
+                                </span>
+                                <span class="text-gray-500 text-sm ml-1">participants</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <span id="remaining-count-2u" class="text-lg text-gray-600">
+                            <span class="font-semibold text-silver">10</span> more needed to draw
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 10U Tier Progress -->
+                <div class="mb-12">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-gold to-yellow-500 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-white text-xl font-bold">10</span>
+                        </div>
+                        <h3 class="text-2xl font-display font-bold text-gray-700">Gold Tier</h3>
+                    </div>
+                    
+                    <div class="relative mb-6">
+                        <div class="bg-gray-100 rounded-2xl h-16 overflow-hidden shadow-inner">
+                            <div id="progress-bar-10u" class="bg-gradient-to-r from-gold to-yellow-500 h-full rounded-2xl transition-all duration-700 ease-out" style="width: 0%"></div>
+                        </div>
+                        <div id="progress-label-10u" class="absolute top-1/2 left-[50%] -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                            <div class="bg-white px-6 py-2 rounded-full shadow-lg border border-gray-200">
+                                <span class="text-gray-700 font-semibold">
+                                    <span id="participant-count-10u">0</span>/10
+                                </span>
+                                <span class="text-gray-500 text-sm ml-1">participants</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <span id="remaining-count-10u" class="text-lg text-gray-600">
+                            <span class="font-semibold text-gold">10</span> more needed to draw
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Tier Selection - Right after progress bars -->
+                <div class="mt-16 mb-16">
+                    <div class="text-center mb-12">
+                        <h2 class="text-4xl font-bold mb-2 text-gray-800">Choose <span class="text-primary">Tier</span></h2>
+                        <p class="text-xl text-gray-600">Select your preferred tier to participate</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        <!-- 2U Tier Card -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center transform hover:scale-105 transition-all duration-300 hover:shadow-xl">
+                            <div class="w-20 h-20 bg-gradient-to-br from-silver to-gray-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <span class="text-white text-3xl font-bold">2</span>
+                            </div>
+                            <h3 class="text-3xl font-bold mb-3 text-gray-800">Silver Tier</h3>
+                            <p class="text-gray-600 mb-6 text-lg">0.2 Tickets</p>
+                            <button class="buy-ticket-btn w-full bg-gradient-to-r from-silver to-gray-400 hover:from-gray-400 hover:to-silver text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl" data-amount="2">
+                                <i class="fa fa-ticket mr-2"></i> Buy Now
+                            </button>
+                        </div>
+                        
+                        <!-- 10U Tier Card -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center transform hover:scale-105 transition-all duration-300 hover:shadow-xl relative">
+                            <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-gold to-yellow-500 text-white font-bold px-4 py-2 rounded-full text-sm shadow-lg">
+                                ⭐ Popular
+                            </div>
+                            <div class="w-20 h-20 bg-gradient-to-br from-gold to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <span class="text-white text-3xl font-bold">10</span>
+                            </div>
+                            <h3 class="text-3xl font-bold mb-3 text-gray-800">Gold Tier</h3>
+                            <p class="text-gray-600 mb-6 text-lg">1 Full Ticket</p>
+                            <button class="buy-ticket-btn w-full bg-gradient-to-r from-gold to-yellow-500 hover:from-yellow-500 hover:to-gold text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl" data-amount="10">
+                                <i class="fa fa-ticket mr-2"></i> Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats for both tiers -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <!-- 2U Tier Stats -->
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-silver to-gray-400 px-6 py-4">
+                            <h3 class="text-xl font-display font-bold text-white text-center">Silver Tier Statistics</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-silver mb-2" id="total-amount-2u">0</div>
+                                    <div class="text-sm text-gray-600 font-medium">Total Pool (U)</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-gray-700 mb-2" id="participant-count-2u-stats">0</div>
+                                    <div class="text-sm text-gray-600 font-medium">Participants</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 10U Tier Stats -->
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-gold to-yellow-500 px-6 py-4">
+                            <h3 class="text-xl font-display font-bold text-white text-center">Gold Tier Statistics</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-gold mb-2" id="total-amount-10u">0</div>
+                                    <div class="text-sm text-gray-600 font-medium">Total Pool (U)</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-gray-700 mb-2" id="participant-count-10u-stats">0</div>
+                                    <div class="text-sm text-gray-600 font-medium">Participants</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pools for both tiers -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                    <!-- 2U Tier Pool -->
+                    <div class="group bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
+                        <div class="bg-gradient-to-r from-silver to-gray-400 px-6 py-4">
+                            <h3 class="text-xl font-display font-bold text-white text-center">Silver Pool</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex items-end gap-2 mb-4">
+                                <span id="current-pool-2u" class="text-4xl font-bold text-silver">0</span>
+                                <span class="text-lg font-medium text-gray-600 mb-1">U</span>
+                            </div>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <div class="flex items-center">
+                                    <i class="fa fa-users mr-3 text-silver"></i>
+                                    <span id="current-participants-2u">0</span> Participants
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa fa-clock-o mr-3 text-silver"></i>
+                                    <span id="pool-status-2u">Waiting...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 10U Tier Pool -->
+                    <div class="group bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
+                        <div class="bg-gradient-to-r from-gold to-yellow-500 px-6 py-4">
+                            <h3 class="text-xl font-display font-bold text-white text-center">Gold Pool</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex items-end gap-2 mb-4">
+                                <span id="current-pool-10u" class="text-4xl font-bold text-gold">0</span>
+                                <span class="text-lg font-medium text-gray-600 mb-1">U</span>
+                            </div>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <div class="flex items-center">
+                                    <i class="fa fa-users mr-3 text-gold"></i>
+                                    <span id="current-participants-10u">0</span> Participants
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa fa-clock-o mr-3 text-gold"></i>
+                                    <span id="pool-status-10u">Waiting...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Grand Prize Pool -->
+                    <div class="group bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
+                        <div class="bg-gradient-to-r from-primary to-info px-6 py-4">
+                            <h3 class="text-xl font-display font-bold text-white text-center">Grand Prize</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex items-end gap-2 mb-4">
+                                <span id="grand-prize" class="text-4xl font-bold text-primary">0</span>
+                                <span class="text-lg font-medium text-gray-600 mb-1">U</span>
+                            </div>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <div class="flex items-center">
+                                    <i class="fa fa-trophy mr-3 text-primary"></i>
+                                    <span id="total-tickets">0</span> Total Tickets
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa fa-calendar mr-3 text-primary"></i>
+                                    Next: <span id="next-draw">Sunday</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Participants lists for both tiers -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
+                    <!-- 2U Tier Participants -->
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-silver to-gray-400 px-6 py-4">
+                            <h3 class="text-xl font-display font-bold text-white text-center">Silver Tier Participants</h3>
+                        </div>
+                        <div class="p-6">
+                            <div id="participants-list-2u" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-60 overflow-y-auto">
+                                <!-- Participant cards injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 10U Tier Participants -->
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-gold to-yellow-500 px-6 py-4">
+                            <h3 class="text-xl font-display font-bold text-white text-center">Gold Tier Participants</h3>
+                        </div>
+                        <div class="p-6">
+                            <div id="participants-list-10u" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-60 overflow-y-auto">
+                                <!-- Participant cards injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+
+    <!-- Referral program -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto bg-gradient-to-r from-memePink to-purple-600 rounded-3xl p-8 md:p-12 border-meme shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 text-9xl opacity-20">💸</div>
+                
+                <div class="relative z-10">
+                    <h2 class="text-4xl font-bold mb-6 text-white text-shadow text-center">REFER & <span class="text-memeYellow">EARN</span></h2>
+                    <p class="text-xl text-white mb-8 text-center">Get 0.5U for each person you refer (when they play)</p>
+                    
+                    <div class="bg-white p-6 rounded-xl border-2 border-black mb-6">
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <input id="referral-link-input" type="text" value="" placeholder="Connect wallet to generate invite link" class="flex-1 font-meme p-3 border-2 border-gray-300 rounded-lg" readonly>
+                            <button id="copy-referral-link-btn" class="bg-memeBlue hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg border-2 border-black transform hover:scale-105 transition-all whitespace-nowrap">
+                                Copy Link
+                            </button>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="text-white">My Referral Balance</div>
+                            <div id="referral-balance" class="text-2xl font-extrabold text-memeYellow">0</div>
+                        </div>
+                         <p class="mt-2 text-white/90 text-sm">Rewards accumulate to your balance. Once you reach <strong>1U</strong>, they are auto-paid or can be withdrawn.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white/90 p-5 rounded-xl border-2 border-black">
+                            <h3 class="text-xl font-bold mb-2">Your Referrals</h3>
+                            <p id="referral-people" class="text-3xl font-bold">0</p>
+                        </div>
+                        
+                        <div class="bg-white/90 p-5 rounded-xl border-2 border-black">
+                            <h3 class="text-xl font-bold mb-2">Earnings (U)</h3>
+                            <p class="text-3xl font-bold"><span id="referral-earnings">0</span> U</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+
+
+
+    <!-- Notification area -->
+    <div id="notification" class="fixed top-4 right-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-4 max-w-sm border-2 border-black">
+            <div class="flex items-center">
+                <div id="notification-icon" class="mr-3"></div>
+                <div>
+                    <p id="notification-message" class="text-sm font-medium"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 border-2 border-black">
+            <div class="flex items-center">
+                <div class="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mr-3"></div>
+                <span id="loading-text">Processing...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet modal (hidden by default) -->
+    <div id="wallet-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl border-4 border-black p-8 max-w-md w-full mx-4 transform transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Connect Wallet</h3>
+                <button id="close-modal" class="text-2xl">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <button id="phantom-connect" class="w-full flex items-center justify-center gap-3 bg-gray-100 hover:bg-gray-200 font-bold py-3 px-4 rounded-lg border-2 border-black">
+                    <img src="png/1.jpg" alt="Phantom Wallet logo" class="w-8 h-8 rounded">
+                    Phantom
+                </button>
+                
+                <button id="solflare-connect" class="w-full flex items-center justify-center gap-3 bg-gray-100 hover:bg-gray-200 font-bold py-3 px-4 rounded-lg border-2 border-black">
+                    <img src="png/2.jpg" alt="Solflare Wallet logo" class="w-8 h-8 rounded">
+                    Solflare
+                </button>
+                
+                <button id="coinbase-connect" class="w-full flex items-center justify-center gap-3 bg-gray-100 hover:bg-gray-200 font-bold py-3 px-4 rounded-lg border-2 border-black">
+                    <img src="png/3.jpg" alt="Coinbase Wallet logo" class="w-8 h-8 rounded">
+                    Coinbase Wallet
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Firebase Functions配置
-        const FIREBASE_FUNCTIONS_BASE = 'https://us-central1-chat-294cc.cloudfunctions.net';
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5Z5ieEbAcfQX0kxGSn9ldGXhzvAwx_8M",
+            authDomain: "chat-294cc.firebaseapp.com",
+            databaseURL: "https://chat-294cc-default-rtdb.firebaseio.com",
+            projectId: "chat-294cc",
+            storageBucket: "chat-294cc.appspot.com",
+            messagingSenderId: "913615304269",
+            appId: "1:913615304269:web:0274ffaccb8e6b678e4e04",
+            measurementId: "G-SJR9NDW86B"
+        };
+
+        // Init Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
         
-        const dialogueList = document.getElementById('dialogue-list');
-        const input = document.getElementById('dialogue-input');
-        const sendBtn = document.getElementById('send-btn');
-
-        // 显示AI正在输入状态
-        function showTypingIndicator() {
-            const typingItem = document.createElement('div');
-            typingItem.className = 'dialogue-item assistant typing-indicator';
-            typingItem.innerHTML = '<div style="display: flex; gap: 4px;"><div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: typing 1.4s infinite;"></div><div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: typing 1.4s infinite; animation-delay: 0.2s;"></div><div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: typing 1.4s infinite; animation-delay: 0.4s;"></div></div>';
-            dialogueList.appendChild(typingItem);
-            dialogueList.scrollTop = dialogueList.scrollHeight;
-            return typingItem;
-        }
-
-        // 移除输入状态
-        function removeTypingIndicator(typingItem) {
-            if (typingItem) {
-                typingItem.remove();
-            }
-        }
-
-        // 调用AI API
-        async function callChatAPI(message) {
-            try {
-                const response = await fetch(`${FIREBASE_FUNCTIONS_BASE}/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, conversationHistory: [] })
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-                
-                return await response.json();
-            } catch (error) {
-                console.error('API调用失败:', error);
-                throw error;
-            }
-        }
-
-        // 发送消息
-        async function sendMessage() {
-            const content = input.value.trim();
-            if (!content) return;
-
-            // 禁用输入和按钮
-            input.disabled = true;
-            sendBtn.disabled = true;
-            sendBtn.textContent = '...';
-
-            // 添加用户消息
-            const userItem = document.createElement('div');
-            userItem.className = 'dialogue-item user';
-            userItem.textContent = content;
-            dialogueList.appendChild(userItem);
-
-            // 清空输入框
-            input.value = '';
-
-            // 滚动到底部
-            dialogueList.scrollTop = dialogueList.scrollHeight;
-
-            // 显示AI正在输入状态
-            const typingItem = showTypingIndicator();
-
-            try {
-                // 调用AI API
-                const result = await callChatAPI(content);
-                
-                // 移除输入状态
-                removeTypingIndicator(typingItem);
-                
-                // 添加AI回复
-                const assistantItem = document.createElement('div');
-                assistantItem.className = 'dialogue-item assistant';
-                assistantItem.textContent = result.response;
-                dialogueList.appendChild(assistantItem);
-                
-            } catch (error) {
-                // 移除输入状态
-                removeTypingIndicator(typingItem);
-                
-                // 显示错误消息
-                const errorItem = document.createElement('div');
-                errorItem.className = 'dialogue-item assistant';
-                errorItem.textContent = `抱歉，服务暂时不可用。错误信息：${error.message}`;
-                dialogueList.appendChild(errorItem);
-            } finally {
-                // 恢复输入和按钮
-                input.disabled = false;
-                sendBtn.disabled = false;
-                sendBtn.textContent = '→';
-                
-                // 滚动到底部
-                dialogueList.scrollTop = dialogueList.scrollHeight;
-                
-                // 重新聚焦输入框
-                input.focus();
-            }
-        }
-
-        // 按钮点击发送
-        sendBtn.addEventListener('click', sendMessage);
-
-        // 回车发送
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // 自动检测连接状态
-        async function checkConnectionStatus() {
-            const statusDot = document.getElementById('connection-status');
-            const statusText = document.getElementById('status-text');
-            
-            try {
-                // 添加超时处理
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-                
-                const response = await fetch(`${FIREBASE_FUNCTIONS_BASE}/health`, {
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (response.ok) {
-                    statusDot.style.background = '#10b981';
-                    statusText.textContent = 'Connected';
-                    statusDot.style.animation = 'none';
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-            } catch (error) {
-                console.log('Connection check failed:', error.message);
-                statusDot.style.background = '#ef4444';
-                if (error.name === 'AbortError') {
-                    statusText.textContent = 'Connection Timeout';
-                } else if (error.message.includes('ERR_CONNECTION_RESET')) {
-                    statusText.textContent = 'Network Error';
-                } else {
-                    statusText.textContent = 'Connection Failed';
-                }
-                statusDot.style.animation = 'none';
-            }
-        }
+        // Set Cloud Functions region to match deployed functions
+        const functions = firebase.functions();
+        // functions.useEmulator('localhost', 5001); // Remove this line in production
+        // Note: In Firebase v9 compat, region is set when calling functions
         
-        // 照片墙数据 - 使用本地图片
-        const photoData = [
-            'png/1.jpg',
-            'png/2.jpg',
-            'png/3.jpg',
-            'png/4.jpg',
-            'png/5.jpg',
-            'png/6.jpg',
-            'png/7.jpg',
-            'png/8.jpg',
-            'png/9.jpg',
-            'png/10.jpg'
-        ];
-
-        // 创建照片墙
-        function createPhotoWall(containerId, photos) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            // 创建内部容器
-            const innerContainer = document.createElement('div');
-            innerContainer.className = 'photo-wall-inner';
-            
-            // 添加第一组照片
-            photos.forEach((photoUrl, index) => {
-                const photoItem = document.createElement('div');
-                photoItem.className = 'photo-item';
-                
-                const img = document.createElement('img');
-                img.src = photoUrl;
-                img.alt = `照片 ${index + 1}`;
-                img.loading = 'lazy';
-                
-                photoItem.appendChild(img);
-                innerContainer.appendChild(photoItem);
+        // Enable anonymous auth to avoid permission issues
+        auth.signInAnonymously()
+            .then(() => {
+                console.log('Anonymous auth success');
+            })
+            .catch((error) => {
+                console.error('Anonymous auth failed:', error);
             });
-            
-            // 添加第二组照片（用于无缝循环）
-            photos.forEach((photoUrl, index) => {
-                const photoItem = document.createElement('div');
-                photoItem.className = 'photo-item';
-                
-                const img = document.createElement('img');
-                img.src = photoUrl;
-                img.alt = `照片 ${index + 1}`;
-                img.loading = 'lazy';
-                
-                photoItem.appendChild(img);
-                innerContainer.appendChild(photoItem);
-            });
-            
-            container.appendChild(innerContainer);
-        }
 
-        // 全局错误处理
-        window.addEventListener('error', (event) => {
-            console.log('Global error:', event.error);
-            // 忽略evmAsk.js相关的错误
-            if (event.filename && event.filename.includes('evmAsk.js')) {
-                event.preventDefault();
-                return false;
-            }
-        });
-        
-        // 页面加载完成后自动检测连接状态和创建照片墙
-        window.addEventListener('load', () => {
-            setTimeout(checkConnectionStatus, 1000);
-            
-            // 创建左右两侧的照片墙
-            createPhotoWall('left-photo-wall', photoData);
-            createPhotoWall('right-photo-wall', photoData);
-            
-            // 确保输入框正常工作
-            if (input && sendBtn) {
-                // 按钮点击发送
-                sendBtn.addEventListener('click', sendMessage);
-                
-                // 回车发送
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        sendMessage();
+        // Ensure auth before writing
+        async function ensureAuth() {
+            if (auth.currentUser) return auth.currentUser;
+            return await new Promise(async (resolve) => {
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        unsubscribe();
+                        resolve(user);
                     }
                 });
+                try { await auth.signInAnonymously(); } catch (e) {}
+            });
+        }
+
+        // Solana connection - reliable RPC endpoint
+        const connection = new solanaWeb3.Connection('https://small-holy-forest.solana-mainnet.quiknode.pro/b59315ea187b3de1b3542c5c25d7f2d5b5410ff4/');
+        let wallet = null;
+        let currentUser = null;
+        let currentRound = null;
+        let currentSolPrice = 1; // default SOL price, will be updated on init
+        let referralReferrer = null; // referrer from URL
+
+        // Fetch SOL price
+        async function fetchSolPrice() {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+                const data = await response.json();
+                if (data.solana && data.solana.usd) {
+                    currentSolPrice = data.solana.usd;
+                    console.log('Current SOL price:', currentSolPrice, 'USD');
+                    updateSolPriceDisplay();
+                    return currentSolPrice;
+                } else {
+                    console.warn('Failed to fetch SOL price, using default 1 USD');
+                    currentSolPrice = 1;
+                    updateSolPriceDisplay();
+                    return 1;
+                }
+            } catch (error) {
+                console.error('Failed to fetch SOL price:', error);
+                currentSolPrice = 1;
+                updateSolPriceDisplay();
+                return 1;
+            }
+        }
+
+        // Update SOL price display
+        function updateSolPriceDisplay() {
+            const solPriceElement = document.getElementById('sol-price');
+            if (solPriceElement) {
+                solPriceElement.textContent = `$${currentSolPrice.toFixed(2)}`;
+                // If price fetch failed, show warning style
+                if (currentSolPrice === 1) {
+                    solPriceElement.classList.add('text-red-500');
+                    solPriceElement.title = 'Failed to fetch price, using default';
+                } else {
+                    solPriceElement.classList.remove('text-red-500');
+                    solPriceElement.title = '';
+                }
+            }
+        }
+
+        // Convert U to lamports
+        function convertUToLamports(uAmount) {
+            return Math.floor(uAmount * solanaWeb3.LAMPORTS_PER_SOL / currentSolPrice);
+        }
+
+        // DOM elements
+        const connectWalletBtn = document.getElementById('wallet-connect');
+        const walletInfo = document.getElementById('wallet-info');
+        const walletAddress = document.getElementById('wallet-address');
+        const disconnectWalletBtn = document.getElementById('disconnect-wallet');
+        const buyTicketsBtn = document.getElementById('buy-tickets-btn');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+        const notificationIcon = document.getElementById('notification-icon');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        const walletModal = document.getElementById('wallet-modal');
+        const closeModal = document.getElementById('close-modal');
+        const phantomConnect = document.getElementById('phantom-connect');
+        const solflareConnect = document.getElementById('solflare-connect');
+        const coinbaseConnect = document.getElementById('coinbase-connect');
+        const drawResultModal = document.getElementById('draw-result-modal');
+        const closeDrawResult = document.getElementById('close-draw-result');
+        const drawResultContent = document.getElementById('draw-result-content');
+        const referralLinkInput = document.getElementById('referral-link-input');
+        const copyReferralLinkBtn = document.getElementById('copy-referral-link-btn');
+        const referralBalanceEl = document.getElementById('referral-balance');
+        const referralPeopleEl = document.getElementById('referral-people');
+        const referralEarningsEl = document.getElementById('referral-earnings');
+
+        // Utils
+        function showNotification(message, type = 'info') {
+            notificationMessage.textContent = message;
+            notificationIcon.innerHTML = type === 'success' ? 
+                '<i class="fa fa-check-circle text-green-500 text-xl"></i>' :
+                type === 'error' ? 
+                '<i class="fa fa-exclamation-circle text-red-500 text-xl"></i>' :
+                '<i class="fa fa-info-circle text-blue-500 text-xl"></i>';
+            notification.classList.remove('hidden');
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Round listener flags to avoid duplicate modals
+        let activeRoundUnsubscribe = null;
+        let lastResultShownRoundId = null;
+
+        function showLoading(text = 'Processing...') {
+            loadingText.textContent = text;
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        function updateWalletUI() {
+            if (wallet && wallet.publicKey) {
+                const address = wallet.publicKey.toString();
+                walletAddress.textContent = `${address.slice(0, 4)}...${address.slice(-4)}`;
+                connectWalletBtn.classList.add('hidden');
+                walletInfo.classList.remove('hidden');
+                buyTicketsBtn.classList.remove('hidden');
+                // Generate referral link
+                if (referralLinkInput) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('ref', address);
+                    referralLinkInput.value = url.toString();
+                }
+            } else {
+                connectWalletBtn.classList.remove('hidden');
+                walletInfo.classList.add('hidden');
+                buyTicketsBtn.classList.add('hidden');
+                if (referralLinkInput) referralLinkInput.value = '';
+            }
+        }
+        
+        function updateRoundInfo(round) {
+            if (round) {
+                const participants = round.participants || [];
+                const participantCount = participants.length;
+                const totalAmount = round.totalAmount || 0;
+                const status = round.status || 'active';
                 
-                // 自动聚焦输入框
-                input.focus();
+                // Separate participants by tier
+                const participants2u = participants.filter(p => p.amount === 2);
+                const participants10u = participants.filter(p => p.amount === 10);
+                
+                const participantCount2u = participants2u.length;
+                const participantCount10u = participants10u.length;
+                const totalAmount2u = participants2u.reduce((sum, p) => sum + (p.amount || 0), 0);
+                const totalAmount10u = participants10u.reduce((sum, p) => sum + (p.amount || 0), 0);
+                
+                const remaining2u = Math.max(0, 10 - participantCount2u);
+                const remaining10u = Math.max(0, 10 - participantCount10u);
+
+                // Update 2U tier
+                updateTierUI('2u', participantCount2u, remaining2u, totalAmount2u, status);
+                
+                // Update 10U tier
+                updateTierUI('10u', participantCount10u, remaining10u, totalAmount10u, status);
+
+                // Update participants list
+                updateParticipantsList(participants);
+            }
+        }
+        
+        function updateTierUI(tier, participantCount, remaining, totalAmount, status) {
+            const suffix = tier === '2u' ? '2u' : '10u';
+            
+            // Update progress bar
+            const progressBarElement = document.getElementById(`progress-bar-${suffix}`);
+            const progressLabelElement = document.getElementById(`progress-label-${suffix}`);
+            const participantCountElement = document.getElementById(`participant-count-${suffix}`);
+            const remainingCountElement = document.getElementById(`remaining-count-${suffix}`);
+            const totalAmountElement = document.getElementById(`total-amount-${suffix}`);
+            const participantCountStatsElement = document.getElementById(`participant-count-${suffix}-stats`);
+            const currentPoolElement = document.getElementById(`current-pool-${suffix}`);
+            const currentParticipantsElement = document.getElementById(`current-participants-${suffix}`);
+            const poolStatusElement = document.getElementById(`pool-status-${suffix}`);
+
+            if (participantCountElement) participantCountElement.textContent = participantCount;
+            if (remainingCountElement) remainingCountElement.textContent = remaining;
+            if (totalAmountElement) totalAmountElement.textContent = totalAmount;
+            if (participantCountStatsElement) participantCountStatsElement.textContent = participantCount;
+            if (currentPoolElement) currentPoolElement.textContent = totalAmount;
+            if (currentParticipantsElement) currentParticipantsElement.textContent = participantCount;
+            if (poolStatusElement) poolStatusElement.textContent = status === 'active' ? 'In progress...' : 'Ended';
+
+            // Progress bar (by count)
+            const progress = Math.min(participantCount * 10, 100);
+            if (progressBarElement) progressBarElement.style.width = `${progress}%`;
+            
+            // Update progress label position
+            if (progressLabelElement && progress > 0) {
+                progressLabelElement.style.left = `${Math.min(progress, 90)}%`;
+            }
+        }
+
+        // Update participants list for both tiers
+        function updateParticipantsList(participants) {
+            // Separate participants by tier
+            const participants2u = participants.filter(p => p.amount === 2);
+            const participants10u = participants.filter(p => p.amount === 10);
+            
+            // Update 2U tier
+            updateTierParticipants('participants-list-2u', participants2u, '2U');
+            
+            // Update 10U tier
+            updateTierParticipants('participants-list-10u', participants10u, '10U');
+        }
+        
+        function updateTierParticipants(elementId, participants, tierName) {
+            const participantsList = document.getElementById(elementId);
+            
+            if (!participantsList) return;
+            
+            if (participants.length === 0) {
+                participantsList.innerHTML = `<div class="col-span-full text-center text-gray-500 py-8">No ${tierName} participants</div>`;
+                return;
+            }
+
+            const participantsHTML = participants.map((participant, index) => {
+                const walletAddress = participant.walletAddress || '';
+                const shortAddress = walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : 'Unknown';
+                const amount = participant.amount || 0;
+                const timestamp = participant.timestamp ? new Date(participant.timestamp.toDate()).toLocaleTimeString() : '';
+                
+                // Icon/color by tier
+                let icon = tierName === '2U' ? '🥈' : '🏆';
+                let bgColor = tierName === '2U' ? 'bg-gray-50' : 'bg-yellow-50';
+                let borderColor = tierName === '2U' ? 'border-silver' : 'border-gold';
+                let textColor = tierName === '2U' ? 'text-silver' : 'text-gold';
+
+                return `
+                    <div class="${bgColor} p-4 rounded-xl border-2 ${borderColor} text-center hover:shadow-md transition-all duration-200 group">
+                        <div class="text-2xl mb-3 group-hover:scale-110 transition-transform">${icon}</div>
+                        <div class="font-bold ${textColor} text-lg mb-2">${amount}U</div>
+                        <div class="text-xs text-gray-600 mb-2 font-mono">${shortAddress}</div>
+                        <div class="text-xs text-gray-500 bg-white/60 px-2 py-1 rounded-full inline-block">${timestamp}</div>
+                    </div>
+                `;
+            }).join('');
+
+            participantsList.innerHTML = participantsHTML;
+        }
+
+        // Show draw result modal (reuse history detail style)
+        function showDrawResult(round) {
+            if (!round) return;
+            const winner = round.winner;
+            const participants = Array.isArray(round.participants) ? round.participants : [];
+
+            const winnerBlock = winner ? `
+                <div class="bg-memeYellow p-4 rounded-lg border-2 border-black mb-4">
+                    <h4 class="font-bold text-lg mb-2">🏆 Winner</h4>
+                    <div class="space-y-1 text-sm">
+                        <div><strong>Wallet:</strong> ${winner.walletAddress || '-'}</div>
+                        <div><strong>User ID:</strong> ${winner.userId || '-'}</div>
+                        <div><strong>Amount:</strong> ${winner.amount || 0}U</div>
+                        <div><strong>Time:</strong> ${winner.timestamp ? new Date(winner.timestamp.toDate()).toLocaleString() : 'Unknown'}</div>
+                    </div>
+                </div>
+            ` : '';
+
+            const participantsList = participants.length > 0 ? participants.map((p, idx) => `
+                <div class="flex justify-between items-center py-2 border-b border-gray-200 ${winner && p.walletAddress === winner.walletAddress ? 'bg-memeYellow' : ''}">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm font-bold">#${idx + 1}</span>
+                        <div>
+                            <div class="text-sm font-medium">${p.walletAddress || '-'}</div>
+                            <div class="text-xs text-gray-500">${p.timestamp ? new Date(p.timestamp.toDate()).toLocaleString() : 'Unknown'}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">${p.amount || 0}U</div>
+                        ${winner && p.walletAddress === winner.walletAddress ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">🏆 Winner</span>' : ''}
+                    </div>
+                </div>
+            `).join('') : '<p class="text-gray-500">No participants</p>';
+
+            drawResultContent.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-lg mb-2">Round Info</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div><strong>Round ID:</strong> ${round.id}</div>
+                            <div><strong>Status:</strong> Completed</div>
+                            <div><strong>Total:</strong> ${round.totalAmount || 0}U</div>
+                            <div><strong>Prize:</strong> ${round.prizeAmount || 0}U</div>
+                            <div><strong>Buyback:</strong> ${round.buybackAmount || 0}U</div>
+                            <div><strong>Referrals:</strong> ${round.referralAmount || 0}U</div>
+                            <div><strong>Grand Prize:</strong> ${round.grandPrizeAmount || 0}U</div>
+                            <div><strong>Developers:</strong> ${round.developerAmount || 0}U</div>
+                        </div>
+                    </div>
+                    ${winnerBlock}
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-lg mb-2">Participants (${participants.length})</h4>
+                        <div class="max-h-60 overflow-y-auto">
+                            ${participantsList}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            drawResultModal.classList.remove('hidden');
+        }
+
+        // Listen to current active round changes (show modal on first completed with winner)
+        function attachRoundListener(roundId) {
+            if (!roundId) return;
+            try { if (typeof activeRoundUnsubscribe === 'function') activeRoundUnsubscribe(); } catch (_) {}
+
+            activeRoundUnsubscribe = db.collection('rounds').doc(roundId).onSnapshot((doc) => {
+                if (!doc.exists) return;
+                const data = doc.data();
+                // Show only the first time the round completes
+                if (data && data.status === 'completed' && data.winner && lastResultShownRoundId !== doc.id) {
+                    lastResultShownRoundId = doc.id;
+                    showDrawResult({ id: doc.id, ...data });
+                }
+            });
+        }
+
+        function updateUserInfo() {
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) {
+                if (currentUser) {
+                    userInfo.innerHTML = `
+                        <div>
+                            <span class="text-gray-600">Wallet:</span>
+                            <p class="text-sm font-mono break-all">${currentUser.walletAddress}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">My Tickets:</span>
+                            <p class="font-semibold">${currentUser.ticketCount || 0}</p>
+                        </div>
+                    `;
+                } else {
+                    userInfo.innerHTML = '<p class="text-gray-500">Wallet not connected</p>';
+                }
+            }
+        }
+
+        // Wallet connect
+        async function connectWallet(walletType = 'phantom') {
+            try {
+                showLoading('Connecting wallet...');
+                
+                let walletProvider;
+                
+                switch(walletType) {
+                    case 'phantom':
+                        if (!window.solana || !window.solana.isPhantom) {
+                            showNotification('Please install Phantom wallet first', 'error');
+                            hideLoading();
+                            return;
+                        }
+                        walletProvider = window.solana;
+                        break;
+                    case 'solflare':
+                        if (!window.solflare) {
+                            showNotification('Please install Solflare wallet first', 'error');
+                            hideLoading();
+                            return;
+                        }
+                        walletProvider = window.solflare;
+                        break;
+                    case 'coinbase':
+                        if (!window.coinbaseSolana) {
+                            showNotification('Please install Coinbase wallet first', 'error');
+                            hideLoading();
+                            return;
+                        }
+                        walletProvider = window.coinbaseSolana;
+                        break;
+                    default:
+                        showNotification('Unsupported wallet type', 'error');
+                        hideLoading();
+                        return;
+                }
+
+                // Connect
+                const response = await walletProvider.connect();
+                wallet = walletProvider;
+                
+                // Ensure anonymous auth is ready
+                await ensureAuth();
+
+                // Use wallet address as user ID
+                const walletAddress = response.publicKey.toString();
+                
+                // Create or get user (not relying on Firebase Auth)
+                currentUser = {
+                    uid: walletAddress,
+                    walletAddress: walletAddress
+                };
+
+                // Try to create user record (non-blocking on failure)
+                try {
+                    const userRef = db.collection('users').doc(walletAddress);
+                    await userRef.set({
+                        walletAddress: walletAddress,
+                        createdAt: new Date(),
+                        referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+                    }, { merge: true });
+                } catch (firebaseError) {
+                    console.warn('Unable to create user record, but wallet connected:', firebaseError);
+                }
+
+                updateWalletUI();
+                updateUserInfo();
+                loadCurrentRound();
+                loadUserTickets();
+                loadPoolInfo();
+                showNotification('Wallet connected!', 'success');
+                walletModal.classList.add('hidden');
+                
+            } catch (error) {
+                console.error('Failed to connect wallet:', error);
+                showNotification('Failed to connect wallet, please retry', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Disconnect wallet
+        function disconnectWallet() {
+            if (wallet) {
+                wallet.disconnect();
+                wallet = null;
+                currentUser = null;
+                updateWalletUI();
+                updateUserInfo();
+                showNotification('Wallet disconnected', 'info');
+            }
+        }
+
+        // Load current round
+        async function loadCurrentRound() {
+            try {
+                const roundsQuery = db.collection('rounds')
+                    .where('status', '==', 'active')
+                    .orderBy('createdAt', 'desc')
+                    .limit(1);
+                
+                const snapshot = await roundsQuery.get();
+                
+                if (!snapshot.empty) {
+                    const round = snapshot.docs[0];
+                    currentRound = {
+                        id: round.id,
+                        ...round.data()
+                    };
+                } else {
+                    // If no permission to create, keep local placeholder only
+                    currentRound = {
+                        id: null,
+                        status: 'active',
+                        level: 1,
+                        participants: [],
+                        totalAmount: 0,
+                    };
+                }
+                
+                updateRoundInfo(currentRound);
+                
+            } catch (error) {
+                console.error('Failed to load round:', error);
+                showNotification('Failed to load round', 'error');
+            }
+        }
+
+        // Load user tickets
+        async function loadUserTickets() {
+            if (!currentUser) return;
+            
+            try {
+                const ticketsQuery = db.collection('tickets')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .limit(10);
+                
+                const snapshot = await ticketsQuery.get();
+                const tickets = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                const myTickets = document.getElementById('myTickets');
+                if (myTickets) {
+                    if (tickets.length > 0) {
+                        myTickets.innerHTML = tickets.map(ticket => `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                <div>
+                                    <div class="font-semibold">${ticket.amount}U</div>
+                                    <div class="text-sm text-gray-600">
+                                        ${new Date(ticket.createdAt.toDate()).toLocaleDateString()}
+                                    </div>
+                                </div>
+                                    <div class="text-sm text-gray-500">
+                                        ${ticket.status || 'Pending draw'}
+                                    </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        myTickets.innerHTML = '<p class="text-gray-500">No tickets</p>';
+                    }
+                }
+                
+                // Update ticket count in user info
+                if (currentUser) {
+                    currentUser.ticketCount = tickets.length;
+                    updateUserInfo();
+                }
+                // Refresh referral balance
+                try {
+                                            if (typeof firebase !== 'undefined' && firebase.functions && wallet && wallet.publicKey) {
+                            const getBalance = firebase.app().functions('us-central1').httpsCallable('getReferralBalance');
+                            const res = await getBalance({});
+                            if (res && res.data && referralBalanceEl) {
+                                referralBalanceEl.textContent = (res.data.balance || 0).toString();
+                            }
+                        // Count invited users and total earnings
+                        const myWallet = wallet.publicKey.toString();
+                        // Users I invited: users where referrer == myWallet
+                        const invitedSnap = await db.collection('users').where('referrer', '==', myWallet).get();
+                        if (referralPeopleEl) referralPeopleEl.textContent = invitedSnap.size.toString();
+                        // My total referral earnings: sum referralRewards where userId == myWallet
+                        const rewardsSnap = await db.collection('referralRewards').where('userId', '==', myWallet).get();
+                        let totalEarn = 0;
+                        rewardsSnap.forEach(doc => { const a = Number(doc.data().amount || 0); if (!Number.isNaN(a)) totalEarn += a; });
+                        if (referralEarningsEl) referralEarningsEl.textContent = totalEarn.toString();
+                    }
+                } catch (e) {
+                    // Ignore balance fetch failure
+                }
+                
+            } catch (error) {
+                console.error('Failed to load tickets:', error);
+                // On failure, fallback defaults
+                if (currentUser) {
+                    currentUser.ticketCount = 0;
+                    updateUserInfo();
+                }
+            }
+        }
+
+        // Buy ticket
+        async function buyTicket(amount) {
+            if (!wallet || !currentUser || !currentRound) {
+                showNotification('Please connect wallet first', 'error');
+                return;
+            }
+            
+            try {
+                showLoading('Processing purchase...');
+                
+                // Fetch current SOL price
+                await fetchSolPrice();
+                
+                // Calculate needed SOL amount
+                const solAmount = amount / currentSolPrice;
+                const lamports = convertUToLamports(amount);
+                
+                console.log(`${amount}U = ${solAmount.toFixed(4)} SOL (${lamports} lamports)`);
+                
+                // Create transaction
+                const transaction = new solanaWeb3.Transaction();
+                
+                // Send to your project wallet address
+                const recipientAddress = new solanaWeb3.PublicKey('7gD46f6r75znofwTRprqZtgAaTCdcagp6m2r6nqWHg4C');
+                
+                transaction.add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: wallet.publicKey,
+                        toPubkey: recipientAddress,
+                        lamports: lamports,
+                    })
+                );
+
+                // Get latest blockhash and set feePayer (with retries)
+                let blockhash, lastValidBlockHeight;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        const blockhashResult = await connection.getLatestBlockhash('confirmed');
+                        blockhash = blockhashResult.blockhash;
+                        lastValidBlockHeight = blockhashResult.lastValidBlockHeight;
+                        break;
+                    } catch (e) {
+                        if (attempt === 2) throw e;
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                transaction.recentBlockhash = blockhash;
+                transaction.feePayer = wallet.publicKey;
+
+                // Sign and send transaction
+                const signedTx = await wallet.signTransaction(transaction);
+                const txid = await connection.sendRawTransaction(signedTx.serialize(), {
+                    skipPreflight: false,
+                    preflightCommitment: 'confirmed',
+                    maxRetries: 5
+                });
+                
+                // Wait for confirmation (simplified)
+                try {
+                    await connection.confirmTransaction(txid, 'confirmed');
+                } catch (confirmErr) {
+                console.warn('Transaction confirm timeout, may still have succeeded:', confirmErr);
+                    // Continue even if confirm times out
+                }
+
+                // Backend verify and record purchase
+                if (typeof firebase !== 'undefined' && firebase.functions) {
+                    try {
+                        const record = firebase.app().functions('us-central1').httpsCallable('recordPurchase');
+                        await record({ amount, signature: txid, walletAddress: wallet.publicKey.toString(), referrer: referralReferrer });
+                    } catch (fnErr) {
+                        console.warn('Cloud Function recordPurchase failed, fallback to frontend write:', fnErr);
+                        await recordTicketPurchase(amount, txid);
+                    }
+                } else {
+                    await recordTicketPurchase(amount, txid);
+                }
+
+                showNotification(`Purchased ${amount}U ticket! (${solAmount.toFixed(4)} SOL)`, 'success');
+                await loadUserTickets();
+                await loadCurrentRound();
+                
+            } catch (error) {
+                console.error('Purchase failed:', error);
+                showNotification('Purchase failed, please retry', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Record purchase
+        async function recordTicketPurchase(amount, signature) {
+            try {
+                // Ensure authed
+                await ensureAuth();
+                // Record ticket
+                await db.collection('tickets').add({
+                    userId: currentUser.uid,
+                    walletAddress: wallet.publicKey.toString(),
+                    level: amount,
+                    amount: amount,
+                    transactionSignature: signature,
+                    referrer: referralReferrer || null,
+                    createdAt: new Date(),
+                });
+
+                // Update round participants
+                if (currentRound) {
+                    try {
+                        if (currentRound.id) {
+                            const roundRef = db.collection('rounds').doc(currentRound.id);
+                            const roundDoc = await roundRef.get();
+                            if (roundDoc.exists) {
+                                const roundData = roundDoc.data();
+                                const newParticipants = [...(roundData.participants || []), {
+                                    userId: currentUser.uid,
+                                    walletAddress: wallet.publicKey.toString(),
+                                    amount: amount,
+                                    timestamp: new Date(),
+                                }];
+                                await roundRef.update({
+                                    participants: newParticipants,
+                                    totalAmount: (roundData.totalAmount || 0) + amount,
+                                });
+                                if (newParticipants.length >= 10) {
+                                    await triggerLottery(roundRef.id);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('No permission to update round, waiting for backend processing:', e);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to record purchase:', error);
+            }
+        }
+
+        // Trigger draw
+        async function triggerLottery(roundId) {
+            // Frontend no longer updates round state directly; backend handles it
+            showNotification('Round is full, waiting for backend to draw', 'info');
+            await loadCurrentRound();
+        }
+
+        // Load pools info
+        async function loadPoolInfo() {
+            try {
+                const grandPrizeDoc = await db.collection('pools').doc('grandPrize').get();
+                const developerDoc = await db.collection('pools').doc('developer').get();
+                
+                const grandPrizeAmount = grandPrizeDoc.exists ? grandPrizeDoc.data().amount || 0 : 0;
+                const developerAmount = developerDoc.exists ? developerDoc.data().amount || 0 : 0;
+                
+                const grandPrizeElement = document.getElementById('grand-prize');
+                const developerPoolElement = document.getElementById('developer-pool');
+                const totalTicketsElement = document.getElementById('total-tickets');
+                
+                if (grandPrizeElement) grandPrizeElement.textContent = grandPrizeAmount;
+                if (developerPoolElement) developerPoolElement.textContent = developerAmount;
+                
+                // Calculate total tickets (simplified)
+                const ticketsQuery = await db.collection('lotteryTickets').where('used', '==', false).get();
+                if (totalTicketsElement) totalTicketsElement.textContent = ticketsQuery.size;
+                
+            } catch (error) {
+                console.error('Failed to load pool info:', error);
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Parse URL referrer param
+            try {
+                const url = new URL(window.location.href);
+                const ref = url.searchParams.get('ref');
+                if (ref && typeof ref === 'string' && ref.length > 20) {
+                    referralReferrer = ref;
+                }
+            } catch (_) {}
+
+            // Wallet connect button
+            connectWalletBtn.addEventListener('click', () => {
+                walletModal.classList.remove('hidden');
+            });
+
+
+
+            // Disconnect wallet
+            disconnectWalletBtn.addEventListener('click', disconnectWallet);
+
+            // Buy tickets button
+            buyTicketsBtn.addEventListener('click', () => {
+                if (!wallet) {
+                    showNotification('Please connect wallet first', 'error');
+                    return;
+                }
+                // Scroll to ticket section
+                document.querySelector('#ticket-levels').scrollIntoView({ behavior: 'smooth' });
+            });
+
+            // Close modal
+            closeModal.addEventListener('click', () => {
+                walletModal.classList.add('hidden');
+            });
+
+            // Open rules
+            const openRules = document.getElementById('open-rules');
+            const navHowItWorks = document.getElementById('nav-how-it-works');
+            const rulesModal = document.getElementById('rules-modal');
+            const closeRules = document.getElementById('close-rules');
+            if (openRules && rulesModal && closeRules) {
+                openRules.addEventListener('click', () => rulesModal.classList.remove('hidden'));
+                closeRules.addEventListener('click', () => rulesModal.classList.add('hidden'));
+                // Click overlay to close
+                rulesModal.addEventListener('click', (e) => {
+                    if (e.target === rulesModal) rulesModal.classList.add('hidden');
+                });
+            }
+            // Navigation How It Works button
+            if (navHowItWorks && rulesModal) {
+                navHowItWorks.addEventListener('click', () => rulesModal.classList.remove('hidden'));
+            }
+
+            // Open history
+            const openHistoryBtn = document.getElementById('open-history');
+            const historyModal = document.getElementById('history-modal');
+            const closeHistory = document.getElementById('close-history');
+            if (openHistoryBtn && historyModal && closeHistory) {
+                openHistoryBtn.addEventListener('click', () => {
+                    historyModal.classList.remove('hidden');
+                });
+                closeHistory.addEventListener('click', () => historyModal.classList.add('hidden'));
+                // Click overlay to close
+                historyModal.addEventListener('click', (e) => {
+                    if (e.target === historyModal) historyModal.classList.add('hidden');
+                });
+            }
+
+            // Draw result modal - close and overlay close
+            if (closeDrawResult && drawResultModal) {
+                closeDrawResult.addEventListener('click', () => drawResultModal.classList.add('hidden'));
+                drawResultModal.addEventListener('click', (e) => {
+                    if (e.target === drawResultModal) drawResultModal.classList.add('hidden');
+                });
+            }
+
+            // Click outside modal to close
+            walletModal.addEventListener('click', (e) => {
+                if (e.target === walletModal) {
+                    walletModal.classList.add('hidden');
+                }
+            });
+
+            // Wallet provider buttons
+            phantomConnect.addEventListener('click', () => connectWallet('phantom'));
+            solflareConnect.addEventListener('click', () => connectWallet('solflare'));
+            coinbaseConnect.addEventListener('click', () => connectWallet('coinbase'));
+
+            // Tier buy buttons
+            document.querySelectorAll('.buy-ticket-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const amount = parseInt(button.dataset.amount);
+                    buyTicket(amount);
+                });
+            });
+
+            // Copy referral link
+            if (copyReferralLinkBtn && referralLinkInput) {
+                copyReferralLinkBtn.addEventListener('click', async () => {
+                    try {
+                        if (!referralLinkInput.value) return;
+                        await navigator.clipboard.writeText(referralLinkInput.value);
+                        showNotification('Referral link copied', 'success');
+                    } catch (e) {
+                        showNotification('Copy failed, please copy manually', 'error');
+                    }
+                });
+            }
+
+            // Smooth scroll
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+
+            // Add random rotation to cards
+            document.querySelectorAll('.rotate-random').forEach(el => {
+                if (!el.style.getPropertyValue('--rotation')) {
+                    const rotation = (Math.random() * 6) - 3;
+                    el.style.setProperty('--rotation', `${rotation}deg`);
+                }
+            });
+
+            // Initial load
+            loadPoolInfo();
+            // Ensure there are active rounds for both tiers (create or get via Cloud Function)
+            (async () => {
+                try {
+                    if (typeof firebase !== 'undefined' && firebase.functions) {
+                        // Create or get 2U tier round
+                        const createOrGet2u = firebase.app().functions('us-central1').httpsCallable('createOrGetActiveRound');
+                        const res2u = await createOrGet2u({ level: 2 });
+                        
+                        // Create or get 10U tier round
+                        const createOrGet10u = firebase.app().functions('us-central1').httpsCallable('createOrGetActiveRound');
+                        const res10u = await createOrGet10u({ level: 10 });
+                        
+                        // Combine both rounds
+                        if (res2u?.data || res10u?.data) {
+                            const round2u = res2u?.data || { participants: [], totalAmount: 0, level: 2 };
+                            const round10u = res10u?.data || { participants: [], totalAmount: 0, level: 10 };
+                            
+                            currentRound = {
+                                id: round2u.id || round10u.id,
+                                participants: [
+                            ...(round2u.participants || []),
+                            ...(round10u.participants || [])
+                        ],
+                                totalAmount: (round2u.totalAmount || 0) + (round10u.totalAmount || 0),
+                                status: 'active'
+                            };
+                            
+                            updateRoundInfo(currentRound);
+                            
+                            if (round2u.id) attachRoundListener(round2u.id);
+                            if (round10u.id) attachRoundListener(round10u.id);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to init active rounds (will rely on realtime listener):', e);
+                }
+            })();
+            // Init SOL price display
+            updateSolPriceDisplay();
+            fetchSolPrice(); // Init fetch SOL price
+            
+            // Listen for wallet connection state
+            if (window.solana) {
+                window.solana.on('connect', () => {
+                    updateWalletUI();
+                });
+                
+                window.solana.on('disconnect', () => {
+                    disconnectWallet();
+                });
             }
         });
 
-        // 添加打字动画样式
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes typing {
-                0%, 20% { opacity: 0; }
-                50% { opacity: 1; }
-                100% { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
+        // Realtime listen to rounds for both tiers
+        db.collection('rounds')
+            .where('status', '==', 'active')
+            .onSnapshot((snapshot) => {
+                if (!snapshot.empty) {
+                    // Get the latest round for each tier
+                    const rounds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Find the most recent round for each tier
+                    const round2u = rounds.filter(r => r.level === 2).sort((a, b) => b.createdAt - a.createdAt)[0];
+                    const round10u = rounds.filter(r => r.level === 10).sort((a, b) => b.createdAt - a.createdAt)[0];
+                    
+                    // Combine both rounds into a single currentRound object
+                    currentRound = {
+                        id: round2u?.id || round10u?.id,
+                        participants: [
+                            ...(round2u?.participants || []),
+                            ...(round10u?.participants || [])
+                        ],
+                        totalAmount: (round2u?.totalAmount || 0) + (round10u?.totalAmount || 0),
+                        status: 'active'
+                    };
+                    
+                    updateRoundInfo(currentRound);
+                    
+                    // Attach listeners to both rounds if they exist
+                    if (round2u?.id) attachRoundListener(round2u.id);
+                    if (round10u?.id) attachRoundListener(round10u.id);
+                }
+            });
+
+        // Realtime listen to pools
+        db.collection('pools').onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'modified' || change.type === 'added') {
+                    loadPoolInfo();
+                }
+            });
+        });
+
+
+
+
+
+
     </script>
 </body>
 </html>
+
